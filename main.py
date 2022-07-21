@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 token = os.environ['TOKEN']
 
+invites = {}
 intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -16,14 +17,53 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     print(bot.user.name,"has connected to discord" )
+    for guild in bot.guilds:
+      invites[guild.id] = await guild.invites()
+      print(guild)
+def find_invite_by_code(invite_list, code):
+    for inv in invite_list:     
+        if inv.code == code:      
+            return inv
 
-'''
 @bot.event
 async def on_member_join(member):
-    newbie = discord.utils.get(member.guild.roles, id = 993562619854200995)
-    await member.add_roles(newbie)
-    await member.send("Welcome to birds server!")  
-'''
+  invites_before_join = invites[member.guild.id]
+  invites_after_join = await member.guild.invites()
+  for invite in invites_before_join: 
+    if invite.uses < find_invite_by_code(invites_after_join, invite.code).uses:
+      print(f"Member {member.name} Joined")
+      print(f"Invite Code: {invite.code}")
+      print(f"Inviter: {invite.inviter}")
+      if invite.code == 'PEyhP4SsYu':
+        newbie = discord.utils.get(member.guild.roles, id = 993562619854200995)
+        await member.add_roles(newbie)
+        await member.send("Welcome to birds server!") 
+      if invite.code == 'xgEnhEJfbJ':
+        newbie = discord.utils.get(member.guild.roles, id = 993562619854200995)
+        await member.add_roles(newbie)
+        await member.send("Welcome to birds server!") 
+      if invite.code == 'kNnQWBrZnE':
+        await channel.send("Hi")
+      
+      invites[member.guild.id] = invites_after_join
+      return
+
+@bot.event
+async def on_member_remove(member):
+
+    invites[member.guild.id] = await member.guild.invites()    
+
+@bot.event
+async def on_message(msg):
+    if 'beep' in msg.content:
+        print('Keyword found')
+        await msg.reply("Bad word", delete_after=1)
+        await msg.delete()
+        duration = datetime.timedelta(float(0.5))  
+        await msg.author.timeout_for(duration)
+    else:
+      return
+
     
 @bot.command(name = 'roll', help = 'Simulates rolling dice. !roll <number of dice>, <number or sides> ')
 async def roll(ctx, number_of_dice: int, number_of_sides: int):
